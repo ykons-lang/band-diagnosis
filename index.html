@@ -147,17 +147,45 @@ function calculate(){
 
 let scores={}
 
-bands.forEach(b=>{
-scores[b.name]=0
+bands.forEach(band => {
 
-b.tags.forEach(tag=>{
-questions.forEach((q,i)=>{
-if(q.tag===tag){
-scores[b.name]+=answers[i]*q.w
-}
-})
-})
-})
+  let score = 0;
+  let matchCount = 0;
+
+  questions.forEach((q,i)=>{
+
+    if(band.tags.includes(q.tag)){
+
+      if(answers[i] === "yes"){
+        score += 1;
+        matchCount++;
+      }
+
+      if(answers[i] === "normal"){
+        score += 0.5;
+        matchCount++;
+      }
+
+    }
+
+  });
+
+  // タグ数で割る（タグ多すぎバンド対策）
+  let normalizedScore = score / band.tags.length;
+
+  // マッチ率も考慮
+  let matchRate = matchCount / questions.length;
+
+  let finalScore = normalizedScore + (matchRate * 0.5);
+
+  results.push({
+    band: band.name,
+    score: finalScore
+  });
+
+});
+
+results.sort((a,b)=> b.score - a.score);
 
 let top=Object.entries(scores)
 .sort((a,b)=>b[1]-a[1])
