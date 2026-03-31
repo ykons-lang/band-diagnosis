@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ライブハウス邦ロック診断 完全版</title>
+
+<style>
+body{
+background:#0f0f0f;
+color:white;
+font-family:sans-serif;
+text-align:center;
+padding:30px;
+}
+
+button{
+padding:10px 20px;
+margin:8px;
+font-size:15px;
+cursor:pointer;
+}
+
+h2{
+margin-top:40px;
+}
+
+#result{
+margin-top:40px;
+font-size:18px;
+line-height:1.8;
+}
+</style>
+</head>
+
+<body>
+
+<h1>ライブハウス邦ロック診断（精密版）</h1>
+
+<div id="quiz"></div>
+<div id="result"></div>
+
+<script src="bands.js"></script>
+
+<script>
+
+let qIndex=0
+let answers=[]
+
+const questions=[
+
+// パンク系
+{tag:"punk",w:2,text:"疾走感のあるロックが好き"},
+{tag:"melodic",w:2,text:"メロディックパンクが好き"},
+{tag:"hardcore",w:3,text:"ハードコアが好き"},
+{tag:"emo",w:2,text:"エモい歌詞が好き"},
+{tag:"emo2",w:3,text:"泣ける青春パンクが好き"},
+{tag:"girls",w:2,text:"女性ボーカルバンドが好き"},
+
+// ラウド系
+{tag:"loud",w:2,text:"重低音が効いたサウンドが好き"},
+{tag:"heavy",w:3,text:"ヘヴィな音が好き"},
+{tag:"scream",w:3,text:"シャウトやスクリームが好き"},
+{tag:"rap",w:2,text:"ラップロックが好き"},
+
+// ギターロック
+{tag:"guitar",w:2,text:"ギターリフが印象的な曲が好き"},
+{tag:"garage",w:2,text:"荒削りなガレージ感が好き"},
+{tag:"retro",w:1,text:"90年代感あるバンドが好き"},
+
+// インディー
+{tag:"indie",w:2,text:"インディーシーンを追っている"},
+{tag:"lofi",w:2,text:"ローファイな音像が好き"},
+{tag:"alt",w:2,text:"オルタナティブロックが好き"},
+{tag:"shoegaze",w:3,text:"シューゲイザーが好き"},
+{tag:"post",w:3,text:"ポストロックが好き"},
+{tag:"math",w:3,text:"マスロックが好き"},
+
+// ポップ系
+{tag:"pop",w:2,text:"キャッチーな曲が好き"},
+{tag:"jrock",w:1,text:"王道Jロックが好き"},
+{tag:"dance",w:2,text:"踊れるロックが好き"},
+{tag:"funk",w:2,text:"ファンク要素が好き"},
+{tag:"citypop",w:2,text:"シティポップ要素が好き"},
+{tag:"dream",w:2,text:"ドリームポップが好き"},
+{tag:"neo",w:2,text:"ネオソウル的サウンドが好き"},
+
+// フェス
+{tag:"fes",w:2,text:"フェス常連バンドが好き"},
+{tag:"livehouse",w:2,text:"ライブハウス重視で聴く"},
+
+// さらに細分化
+{tag:"acoustic",w:1,text:"アコースティック編成が好き"},
+{tag:"prog",w:3,text:"プログレッシブロックが好き"},
+{tag:"electro",w:2,text:"エレクトロロックが好き"},
+
+// 深掘り質問（精度向上）
+{tag:"lyrics",w:3,text:"歌詞を最重要視する"},
+{tag:"youth",w:2,text:"青春感のある歌詞が好き"},
+{tag:"dark",w:2,text:"暗い世界観が好き"},
+{tag:"bright",w:1,text:"明るい曲が好き"},
+{tag:"technical",w:3,text:"演奏技術が高いバンドが好き"},
+{tag:"underground",w:2,text:"まだ売れていないバンドを探したい"},
+{tag:"festivalcore",w:2,text:"大規模フェス向きの音が好き"},
+{tag:"mosh",w:3,text:"モッシュが起きるライブが好き"},
+{tag:"chorus",w:2,text:"大合唱できる曲が好き"},
+{tag:"solo",w:1,text:"ギターソロが好き"},
+{tag:"bass",w:1,text:"ベースラインが印象的な曲が好き"},
+{tag:"drums",w:1,text:"ドラムがかっこいいバンドが好き"},
+{tag:"female",w:1,text:"女性視点の歌詞が好き"},
+{tag:"male",w:1,text:"男性ボーカルが好き"},
+{tag:"energy",w:2,text:"エネルギー重視"},
+{tag:"melody",w:2,text:"メロディ重視"},
+{tag:"experimental",w:3,text:"実験的な音楽が好き"},
+{tag:"classic",w:1,text:"王道ロックが好き"},
+{tag:"indierock",w:2,text:"UKインディーロックが好き"},
+{tag:"altpop",w:2,text:"オルタナポップが好き"},
+{tag:"soul",w:2,text:"ソウルフルな歌声が好き"},
+{tag:"groove",w:2,text:"グルーヴ重視"},
+{tag:"cinematic",w:2,text:"映画的な世界観が好き"},
+{tag:"emotional",w:3,text:"感情をぶつける系が好き"},
+{tag:"raw",w:2,text:"生々しい音が好き"},
+{tag:"tight",w:1,text:"タイトな演奏が好き"},
+{tag:"anthem",w:2,text:"アンセム系が好き"}
+
+]
+
+function showQuestion(){
+if(qIndex>=questions.length){
+calculate()
+return
+}
+
+document.getElementById("quiz").innerHTML=
+"<h2>"+questions[qIndex].text+"</h2>"+
+'<button onclick="answer(2)">当てはまる</button>'+
+'<button onclick="answer(1)">普通</button>'+
+'<button onclick="answer(0)">当てはまらない</button>'
+}
+
+function answer(v){
+answers.push(v)
+qIndex++
+showQuestion()
+}
+
+function calculate(){
+
+let scores={}
+
+bands.forEach(b=>{
+scores[b.name]=0
+
+b.tags.forEach(tag=>{
+questions.forEach((q,i)=>{
+if(q.tag===tag){
+scores[b.name]+=answers[i]*q.w
+}
+})
+})
+})
+
+let top=Object.entries(scores)
+.sort((a,b)=>b[1]-a[1])
+.slice(0,5)
+
+let html="<h2>あなたに合うバンド TOP5</h2>"
+
+top.forEach(t=>{
+html+=t[0]+"<br>"
+})
+
+html+=festivalJudge()
+
+document.getElementById("quiz").innerHTML=""
+document.getElementById("result").innerHTML=html
+}
+
+function festivalJudge(){
+
+let fesScore=0
+questions.forEach((q,i)=>{
+if(q.tag==="fes"||q.tag==="festivalcore"){
+fesScore+=answers[i]
+}
+})
+
+if(fesScore>6) return "<h3>大型フェス適性：★★★★★</h3>"
+if(fesScore>3) return "<h3>フェス適性：★★★★☆</h3>"
+return "<h3>ライブハウス適性：★★★★★</h3>"
+}
+
+showQuestion()
+
+</script>
+</body>
+</html>
